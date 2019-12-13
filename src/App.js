@@ -1,26 +1,74 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, {useState, useEffect} from 'react';
+import TodoList from "./components/TodoList";
+import {Context} from './helpers/context';
+import './styles/app.css';
 
-function App() {
+export default function App() {
+  const [todo, setTodo] = useState([]);
+  const [todoTitle, setTodoTitle] = useState('');
+
+  useEffect(() => {
+    const raw = localStorage.getItem('todo') || []
+    setTodo(JSON.parse(raw))
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('todo', JSON.stringify(todo))
+  }, [todo]);
+
+  const addItem = () => {
+    if(todoTitle.trim()) {
+      setTodo([
+        ...todo,
+        {
+          id: Date.now(),
+          title: todoTitle,
+          completed: false
+        }
+      ]);
+      setTodoTitle('');
+    } else {
+      alert ('Enter text please')
+    }
+  };
+
+  const removeItem = id => (
+    setTodo(todo.filter(item => {
+      return item.id !== id
+    }))
+  );
+
+  const toggleItem = id => {
+    setTodo(todo.map(item => {
+      if(item.id === id) {
+        item.completed = !item.completed
+      }
+      return item
+    }))
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <Context.Provider value={{
+      removeItem, toggleItem
+    }}>
+    <div className="container">
+      <h3>Todo List</h3>
+      <div className="wrapper">
+        <div className="input-wrapper">
+          <input className="input-field"
+                 type="text"
+                 placeholder="add new item"
+                 value={todoTitle}
+                 onChange={e => setTodoTitle(e.target.value)}
+                 onKeyPress={e => e.key === 'Enter' && addItem()}
+          />
+          <button onClick={addItem}>
+            add
+          </button>
+        </div>
+        <TodoList todo={todo}/>
+      </div>
     </div>
+    </Context.Provider>
   );
 }
-
-export default App;
